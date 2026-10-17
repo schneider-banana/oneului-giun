@@ -81,8 +81,13 @@ export default function Home() {
         Alert.alert("알림 권한", "설정에서 알림을 허용해줘.");
         return;
       }
-      await scheduleReminders(ps[0]);
-      setReminderOn(true);
+      try {
+        await scheduleReminders(ps[0]);
+        setReminderOn(true);
+      } catch (e) {
+        console.warn("[reminder] 알림 예약 실패:", e);
+        Alert.alert("알림 설정 실패", "알림 예약 중 문제가 생겼어. 다시 시도해줘.");
+      }
     } else {
       await cancelReminders();
       setReminderOn(false);

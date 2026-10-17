@@ -19,15 +19,25 @@ export async function isReminderEnabled(): Promise<boolean> {
   return (await AsyncStorage.getItem(ENABLED_KEY)) === "1";
 }
 
-/** 안드로이드 무음 채널 설정 */
+let channelReady = false;
+
+/** 안드로이드 무음 채널 설정 (Expo Go 등에서 실패할 수 있어 방어) */
 async function ensureChannel(): Promise<void> {
   if (Platform.OS !== "android") return;
-  await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-    name: "오늘의 운세",
-    importance: Notifications.AndroidImportance.DEFAULT,
-    vibrationPattern: [0],
-    lightColor: "#FF8C42",
-  });
+  try {
+    await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+      name: "오늘의 운세",
+      importance: Notifications.AndroidImportance.DEFAULT,
+      vibrationPattern: [0],
+      lightColor: "#FF8C42",
+      sound: null, // 채널 자체를 무음으로
+    });
+    channelReady = true;
+  } catch (e) {
+    // Expo Go 등 일부 환경에서 채널 매니저가 없어 NPE 발생 → 기본 채널로 폴백
+    console.warn("[reminder] 알림 채널 생성 실패, 기본 채널 사용:", e);
+    channelReady = false;
+  }
 }
 
 export async function cancelReminders(): Promise<void> {
@@ -64,7 +74,8 @@ export async function scheduleReminders(profile: Profile): Promise<void> {
         title: `오늘의 운세 ${fortune.score}점`,
         body: `${profile.name} — ${fortune.sipsin}의 날. ${firstLine}.`,
         sound: false, // 무음 (iOS)
-        ...(Platform.OS === "android" ? { channelId: CHANNEL_ID } : {}),
+        // 채널 생성에 성공했을 때만 지정 (Expo Go 등에서는 기본 채널 사용)
+        ...(Platform.OS === "android" && channelReady ? { channelId: CHANNEL_ID } : {}),
         data: { profileId: profile.id },
       },
       trigger: {
