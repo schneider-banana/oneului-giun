@@ -8,7 +8,7 @@ import { calcTojeong } from "../src/lib/tojeong";
 import { calcDaeyun, calcSeyun } from "../src/lib/daeun";
 
 const PILLAR_LABELS = ["시", "일", "월", "년"] as const;
-const TABS = ["사주팔자", "오늘의 운세", "토정비결", "평생운"] as const;
+const TABS = ["오늘의 운세", "토정비결", "평생운", "사주팔자"] as const;
 type Tab = (typeof TABS)[number];
 
 // ---------------------------------------------------------------------------
@@ -214,7 +214,7 @@ function DaeunTab({ input }: { input: any }) {
 export default function ResultScreen() {
   const { data } = useLocalSearchParams<{ data: string }>();
   const input = JSON.parse(data);
-  const [tab, setTab] = useState<Tab>("사주팔자");
+  const [tab, setTab] = useState<Tab>("오늘의 운세");
 
   return (
     <View style={styles.container}>
@@ -230,10 +230,10 @@ export default function ResultScreen() {
         ))}
       </View>
       <ScrollView contentContainerStyle={styles.content}>
-        {tab === "사주팔자" && <SajuTab input={input} />}
         {tab === "오늘의 운세" && <DailyTab input={input} />}
         {tab === "토정비결" && <TojeongTab input={input} />}
         {tab === "평생운" && <DaeunTab input={input} />}
+        {tab === "사주팔자" && <SajuTab input={input} />}
       </ScrollView>
     </View>
   );
