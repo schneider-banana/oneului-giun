@@ -1,5 +1,6 @@
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { colors, radius } from "../theme";
+import { ThemeColors, radius, useColors } from "../theme";
 
 interface StepperProps {
   label: string;
@@ -12,6 +13,8 @@ interface StepperProps {
 
 /** 숫자 스테퍼 (생년월일시 입력용) */
 export function Stepper({ label, value, min, max, onChange, unit = "" }: StepperProps) {
+  const c = useColors();
+  const styles = useMemo(() => createStyles(c), [c]);
   const step = (d: number) => {
     const next = Math.min(max, Math.max(min, value + d));
     onChange(next);
@@ -32,26 +35,27 @@ export function Stepper({ label, value, min, max, onChange, unit = "" }: Stepper
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  label: { fontSize: 16, color: colors.text, fontWeight: "600" },
-  controls: { flexDirection: "row", alignItems: "center", gap: 12 },
-  btn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.round,
-    backgroundColor: colors.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pressed: { opacity: 0.6 },
-  btnText: { fontSize: 20, color: colors.primaryDeep, fontWeight: "700" },
-  value: { fontSize: 18, fontWeight: "700", color: colors.text, minWidth: 64, textAlign: "center" },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    label: { fontSize: 16, color: colors.text, fontWeight: "600" },
+    controls: { flexDirection: "row", alignItems: "center", gap: 12 },
+    btn: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.round,
+      backgroundColor: colors.primarySoft,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    pressed: { opacity: 0.6 },
+    btnText: { fontSize: 20, color: colors.primaryDeep, fontWeight: "700" },
+    value: { fontSize: 18, fontWeight: "700", color: colors.text, minWidth: 64, textAlign: "center" },
+  });

@@ -4,7 +4,13 @@ import { useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
 import { MaterialIcons } from "@expo/vector-icons";
-import { colors, ohengColors, radius } from "../src/theme";
+import { ThemeColors, ohengColors, radius, useColors, useIsDark } from "../src/theme";
+
+/** 시스템 테마에 맞는 스타일 */
+function useStyles() {
+  const c = useColors();
+  return useMemo(() => createStyles(c), [c]);
+}
 import { calcSaju, getPillarsSipsin, Pillar, Oheng } from "../src/lib/saju";
 import { calcDailyFortune } from "../src/lib/fortune";
 import { calcTojeong } from "../src/lib/tojeong";
@@ -24,6 +30,7 @@ const STEM_WUXING: Record<string, string> = {
 };
 
 function PillarCard({ label, pillar, sipsin }: { label: string; pillar: Pillar | null; sipsin: string | null }) {
+  const styles = useStyles();
   if (!pillar) {
     return (
       <View style={[styles.pillar, styles.pillarEmpty]}>
@@ -51,6 +58,8 @@ function PillarCard({ label, pillar, sipsin }: { label: string; pillar: Pillar |
 }
 
 function SajuTab({ input }: { input: any }) {
+  const styles = useStyles();
+  const c = useColors();
   const result = useMemo(() => calcSaju(input), [input]);
   const sipsin = useMemo(() => getPillarsSipsin(result), [result]);
   const pillars: (Pillar | null)[] = [result.time, result.day, result.month, result.year];
@@ -91,8 +100,8 @@ function SajuTab({ input }: { input: any }) {
         })}
       </View>
       <Text style={styles.sectionTitle}>일간 — {result.dayStem}</Text>
-      <LinearGradient colors={["#FFF1E2", "#FFE4C8"]} style={styles.teaserCard}>
-        <MaterialIcons name="lock" size={20} color={colors.primaryDeep} />
+      <LinearGradient colors={useIsDark() ? ["#33241A", "#2A1D12"] : ["#FFF1E2", "#FFE4C8"]} style={styles.teaserCard}>
+        <MaterialIcons name="lock" size={20} color={c.primaryDeep} />
         <Text style={styles.teaserTitle}>{result.dayStem}일간의 진짜 성격 풀이</Text>
         <Text style={styles.teaserBody}>
           일간은 '나 자신'을 뜻한다. 성격, 강점, 약점까지 담은 정통사주 리포트에서 확인하자.
@@ -116,14 +125,18 @@ const LUCKY_COLOR_HEX: Record<string, string> = {
   검정: "#332E29",
 };
 
-const CATEGORY_META = [
-  { key: "total", label: "총운", icon: "wb-sunny" as const, tint: "#FFF1E2", iconColor: "#D96C1E" },
-  { key: "love", label: "애정운", icon: "favorite" as const, tint: "#FFE0E8", iconColor: "#E5484D" },
-  { key: "money", label: "재물운", icon: "payments" as const, tint: "#DCF3E4", iconColor: "#2E9E5B" },
-  { key: "health", label: "건강운", icon: "spa" as const, tint: "#E1E9FB", iconColor: "#3B82F6" },
-];
+function getCategoryMeta(isDark: boolean) {
+  return [
+    { key: "total", label: "총운", icon: "wb-sunny" as const, tint: isDark ? "#3A2A17" : "#FFF1E2", iconColor: isDark ? "#FFA268" : "#D96C1E" },
+    { key: "love", label: "애정운", icon: "favorite" as const, tint: isDark ? "#3D232B" : "#FFE0E8", iconColor: isDark ? "#FF7A93" : "#E5484D" },
+    { key: "money", label: "재물운", icon: "payments" as const, tint: isDark ? "#1E3328" : "#DCF3E4", iconColor: isDark ? "#4ADE80" : "#2E9E5B" },
+    { key: "health", label: "건강운", icon: "spa" as const, tint: isDark ? "#1E2A3D" : "#E1E9FB", iconColor: isDark ? "#60A5FA" : "#3B82F6" },
+  ];
+}
 
 function ScoreRing({ score }: { score: number }) {
+  const styles = useStyles();
+  const isDark = useIsDark();
   const size = 148;
   const stroke = 13;
   const r = (size - stroke) / 2;
@@ -136,10 +149,10 @@ function ScoreRing({ score }: { score: number }) {
         <Defs>
           <SvgGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1">
             <Stop offset="0" stopColor="#FF8C42" />
-            <Stop offset="1" stopColor="#D96C1E" />
+            <Stop offset="1" stopColor={isDark ? "#FFA268" : "#D96C1E"} />
           </SvgGradient>
         </Defs>
-        <Circle cx={c} cy={c} r={r} stroke="#F3E4CE" strokeWidth={stroke} fill="none" />
+        <Circle cx={c} cy={c} r={r} stroke={isDark ? "#383026" : "#F3E4CE"} strokeWidth={stroke} fill="none" />
         <Circle
           cx={c} cy={c} r={r}
           stroke="url(#scoreGrad)" strokeWidth={stroke} fill="none"
@@ -157,25 +170,28 @@ function ScoreRing({ score }: { score: number }) {
 }
 
 function DailyTab({ input }: { input: any }) {
+  const styles = useStyles();
+  const isDark = useIsDark();
+  const c = useColors();
   const fortune = useMemo(() => {
     const r = calcSaju(input);
     return calcDailyFortune(input.year, input.month, input.day, r.dayStem);
   }, [input]);
 
-  const categories = CATEGORY_META.map((m) => ({
+  const categories = getCategoryMeta(isDark).map((m) => ({
     ...m,
     text: fortune.text[m.key as keyof typeof fortune.text],
   }));
 
   const luckyItems = [
-    { icon: "palette" as const, label: "행운의 색", value: fortune.luckyColor, swatch: LUCKY_COLOR_HEX[fortune.luckyColor] ?? colors.primary },
+    { icon: "palette" as const, label: "행운의 색", value: fortune.luckyColor, swatch: LUCKY_COLOR_HEX[fortune.luckyColor] ?? c.primary },
     { icon: "tag" as const, label: "행운의 숫자", value: String(fortune.luckyNumber) },
     { icon: "explore" as const, label: "행운의 방향", value: fortune.luckyDirection },
   ];
 
   return (
     <View>
-      <LinearGradient colors={["#FFE7C9", "#FFF6E9"]} style={styles.heroCard}>
+      <LinearGradient colors={isDark ? ["#33241A", "#241A12"] : ["#FFE7C9", "#FFF6E9"]} style={styles.heroCard}>
         <Text style={styles.heroDate}>{fortune.dateLabel}</Text>
         <Text style={styles.heroIljin}>일진 {fortune.dayPillar.korean}({fortune.dayPillar.hanja})</Text>
         <View style={{ marginVertical: 12 }}>
@@ -202,7 +218,7 @@ function DailyTab({ input }: { input: any }) {
       <View style={styles.luckyRow}>
         {luckyItems.map((item) => (
           <View key={item.label} style={styles.luckyChip}>
-            <MaterialIcons name={item.icon} size={20} color={colors.primaryDeep} />
+            <MaterialIcons name={item.icon} size={20} color={c.primaryDeep} />
             <Text style={styles.luckyLabel}>{item.label}</Text>
             {item.swatch ? (
               <View style={[styles.colorDot, { backgroundColor: item.swatch }]} />
@@ -219,16 +235,18 @@ function DailyTab({ input }: { input: any }) {
 // 토정비결 탭
 // ---------------------------------------------------------------------------
 function TojeongTab({ input }: { input: any }) {
+  const styles = useStyles();
   const [year] = useState(new Date().getFullYear());
   const tj = useMemo(
     () => calcTojeong(input.year, input.month, input.day, input.hour, year),
     [input, year]
   );
 
+  const isDark = useIsDark();
   const levelMeta: Record<string, { bg: string; fg: string }> = {
-    길: { bg: "#DCF3E4", fg: "#2E9E5B" },
-    평: { bg: "#F1E7D6", fg: "#8A8175" },
-    흉: { bg: "#FFE0E8", fg: "#E5484D" },
+    길: { bg: isDark ? "#1E3328" : "#DCF3E4", fg: isDark ? "#4ADE80" : "#2E9E5B" },
+    평: { bg: isDark ? "#383026" : "#F1E7D6", fg: isDark ? "#A89880" : "#8A8175" },
+    흉: { bg: isDark ? "#3D232B" : "#FFE0E8", fg: isDark ? "#FF7A93" : "#E5484D" },
   };
 
   return (
@@ -243,8 +261,8 @@ function TojeongTab({ input }: { input: any }) {
       </LinearGradient>
 
       <View style={styles.adviceCard}>
-        <View style={[styles.catIcon, { backgroundColor: "#FFF1E2" }]}>
-          <MaterialIcons name="tips-and-updates" size={22} color="#D96C1E" />
+        <View style={[styles.catIcon, { backgroundColor: isDark ? "#3A2A17" : "#FFF1E2" }]}>
+          <MaterialIcons name="tips-and-updates" size={22} color={isDark ? "#FFA268" : "#D96C1E"} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.catLabel}>올해의 조언</Text>
@@ -275,6 +293,7 @@ function TojeongTab({ input }: { input: any }) {
 // 평생운 탭
 // ---------------------------------------------------------------------------
 function DaeunTab({ input }: { input: any }) {
+  const styles = useStyles();
   const result = useMemo(() => calcSaju(input), [input]);
   const daeyuns = useMemo(
     () => calcDaeyun(input.year, input.month, input.day, input.hour, input.gender ?? 1, result.dayStem),
@@ -284,7 +303,7 @@ function DaeunTab({ input }: { input: any }) {
 
   return (
     <View>
-      <LinearGradient colors={["#E4EBFB", "#F4F7FF"]} style={styles.seyunHero}>
+      <LinearGradient colors={useIsDark() ? ["#1E2A3D", "#161E2E"] : ["#E4EBFB", "#F4F7FF"]} style={styles.seyunHero}>
         <Text style={styles.seyunYear}>{seyun.year}년 세운</Text>
         <Text style={styles.seyunGanzhi}>
           {seyun.ganZhi.korean}({seyun.ganZhi.hanja})
@@ -333,6 +352,7 @@ function DaeunTab({ input }: { input: any }) {
 // 결과 화면
 // ---------------------------------------------------------------------------
 export default function ResultScreen() {
+  const styles = useStyles();
   const { data } = useLocalSearchParams<{ data: string }>();
   const input = JSON.parse(data);
   const [tab, setTab] = useState<Tab>("오늘의 운세");
@@ -360,7 +380,8 @@ export default function ResultScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   tabBar: {
     flexDirection: "row", backgroundColor: colors.card,
@@ -411,7 +432,7 @@ const styles = StyleSheet.create({
   // 오늘의 운세 — 히어로 + 카테고리 + 행운 요소
   heroCard: {
     borderRadius: radius.xl, padding: 20, alignItems: "center",
-    marginBottom: 16, borderWidth: 1, borderColor: "#F5DFC0",
+    marginBottom: 16, borderWidth: 1, borderColor: colors.border,
   },
   heroDate: { fontSize: 14, fontWeight: "700", color: colors.textSoft },
   heroIljin: { fontSize: 13, color: colors.textSoft, marginTop: 2 },
@@ -421,7 +442,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text, borderRadius: radius.round,
     paddingHorizontal: 16, paddingVertical: 7,
   },
-  sipsinBadgeText: { fontSize: 15, fontWeight: "800", color: "#FFFFFF" },
+  sipsinBadgeText: { fontSize: 15, fontWeight: "800", color: colors.background },
   catCard: {
     flexDirection: "row", backgroundColor: colors.card,
     borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
@@ -471,7 +492,7 @@ const styles = StyleSheet.create({
   // 평생운
   seyunHero: {
     borderRadius: radius.xl, padding: 20, alignItems: "center", marginBottom: 20,
-    borderWidth: 1, borderColor: "#D5DDF2",
+    borderWidth: 1, borderColor: colors.border,
   },
   seyunYear: { fontSize: 14, fontWeight: "700", color: colors.textSoft },
   seyunGanzhi: { fontSize: 26, fontWeight: "800", color: colors.text, marginTop: 6 },
@@ -513,7 +534,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text, borderRadius: radius.round,
     paddingHorizontal: 14, paddingVertical: 6, marginTop: 12,
   },
-  teaserBadgeText: { fontSize: 13, fontWeight: "800", color: "#FFFFFF" },
+  teaserBadgeText: { fontSize: 13, fontWeight: "800", color: colors.background },
   guaHanja: { fontSize: 40, fontWeight: "800", color: colors.text, marginBottom: 8 },
   guaName: { fontSize: 18, fontWeight: "800", color: colors.primaryDeep, marginBottom: 12 },
 
@@ -526,4 +547,4 @@ const styles = StyleSheet.create({
     borderRadius: radius.round,
   },
   daeyunGanzhi: { fontSize: 14, fontWeight: "700", color: colors.primaryDeep, marginBottom: 8 },
-});
+  });

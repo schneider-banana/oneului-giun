@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { MaterialIcons } from "@expo/vector-icons";
 import * as Notifications from "expo-notifications";
-import { colors, radius } from "../src/theme";
+import { ThemeColors, radius, useColors, useIsDark } from "../src/theme";
 import { deleteProfile, listProfiles, profileToParams, Profile } from "../src/lib/profiles";
 import {
   cancelReminders, isReminderEnabled, refreshReminders,
@@ -11,6 +13,9 @@ import {
 
 export default function Home() {
   const router = useRouter();
+  const c = useColors();
+  const isDark = useIsDark();
+  const styles = useMemo(() => createStyles(c), [c]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [reminderOn, setReminderOn] = useState(false);
 
@@ -73,29 +78,47 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>오늘의기운</Text>
-      <Text style={styles.subtitle}>광고 없는 사주 운세</Text>
-      <Pressable
-        style={({ pressed }) => [styles.cta, pressed && styles.pressed]}
-        onPress={() => router.push("/input")}
+      <LinearGradient
+        colors={isDark ? ["#2A2016", "#1C1611"] : ["#FFE7C9", "#FFF6E9"]}
+        style={styles.hero}
       >
-        <Text style={styles.ctaText}>＋ 사주 추가하기</Text>
-      </Pressable>
+        <Text style={styles.title}>오늘의기운</Text>
+        <Text style={styles.subtitle}>광고 없는 사주 운세</Text>
+        <Pressable
+          style={({ pressed }) => [styles.cta, pressed && styles.pressed]}
+          onPress={() => router.push("/input")}
+        >
+          <MaterialIcons name="add" size={22} color="#FFFFFF" />
+          <Text style={styles.ctaText}>사주 추가하기</Text>
+        </Pressable>
+      </LinearGradient>
 
-      <Text style={styles.sectionTitle}>보관함 ({profiles.length}/3)</Text>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>보관함</Text>
+        <View style={styles.countBadge}>
+          <Text style={styles.countText}>{profiles.length}/3</Text>
+        </View>
+      </View>
       {profiles.length === 0 ? (
-        <Text style={styles.empty}>아직 저장된 사주가 없다.{"\n"}가족이나 연인의 사주를 저장해보자.</Text>
+        <View style={styles.emptyCard}>
+          <MaterialIcons name="person-add-alt" size={32} color={c.inactive} />
+          <Text style={styles.empty}>아직 저장된 사주가 없다.{"\n"}가족이나 연인의 사주를 저장해보자.</Text>
+        </View>
       ) : (
         <FlatList
           data={profiles}
           keyExtractor={(p) => p.id}
           style={styles.list}
+          scrollEnabled={false}
           renderItem={({ item }) => (
             <Pressable
               style={({ pressed }) => [styles.card, pressed && styles.pressed]}
               onPress={() => openProfile(item)}
               onLongPress={() => remove(item)}
             >
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{item.name.slice(0, 1)}</Text>
+              </View>
               <View style={styles.cardText}>
                 <Text style={styles.cardName}>{item.name}</Text>
                 <Text style={styles.cardSub}>
@@ -103,19 +126,16 @@ export default function Home() {
                   {item.gender === 1 ? "남" : "여"}
                 </Text>
               </View>
-              <Pressable style={styles.deleteBtn} onPress={() => remove(item)}>
-                <Text style={styles.deleteText}>삭제</Text>
-              </Pressable>
+              <MaterialIcons name="chevron-right" size={24} color={c.inactive} />
             </Pressable>
           )}
         />
       )}
-      {profiles.length > 0 && (
-        <Text style={styles.hint}>길게 누르면 삭제할 수 있다</Text>
-      )}
 
-      <Text style={styles.sectionTitle}>알림</Text>
       <View style={styles.reminderRow}>
+        <View style={[styles.reminderIcon, { backgroundColor: c.primarySoft }]}>
+          <MaterialIcons name="notifications-none" size={22} color={c.primaryDeep} />
+        </View>
         <View style={styles.reminderText}>
           <Text style={styles.reminderTitle}>매일 아침 7시 운세 알림</Text>
           <Text style={styles.reminderSub}>소리 없이 조용히 도착해</Text>
@@ -123,7 +143,7 @@ export default function Home() {
         <Switch
           value={reminderOn}
           onValueChange={toggleReminder}
-          trackColor={{ false: colors.border, true: colors.primary }}
+          trackColor={{ false: c.border, true: c.primary }}
           thumbColor="#FFFFFF"
         />
       </View>
@@ -131,50 +151,72 @@ export default function Home() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1, backgroundColor: colors.background,
-    alignItems: "center", padding: 24, paddingTop: 72,
-  },
-  pressed: { opacity: 0.7 },
-  title: { fontSize: 34, fontWeight: "800", color: colors.text, marginBottom: 8 },
-  subtitle: { fontSize: 16, color: colors.textSoft, marginBottom: 28 },
-  cta: {
-    backgroundColor: colors.primary, borderRadius: radius.lg,
-    paddingVertical: 16, paddingHorizontal: 48, marginBottom: 36,
-  },
-  ctaText: { fontSize: 18, fontWeight: "800", color: "#FFFFFF" },
-  sectionTitle: {
-    fontSize: 17, fontWeight: "800", color: colors.text,
-    alignSelf: "flex-start", marginBottom: 12,
-  },
-  empty: {
-    fontSize: 14, color: colors.textSoft, textAlign: "center", lineHeight: 22,
-  },
-  list: { width: "100%" },
-  card: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: colors.card, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
-    padding: 16, marginBottom: 10,
-  },
-  cardText: { flex: 1 },
-  cardName: { fontSize: 17, fontWeight: "800", color: colors.text, marginBottom: 4 },
-  cardSub: { fontSize: 13, color: colors.textSoft },
-  deleteBtn: {
-    paddingHorizontal: 12, paddingVertical: 8,
-    borderRadius: radius.round, backgroundColor: colors.background,
-    borderWidth: 1, borderColor: colors.border,
-  },
-  deleteText: { fontSize: 13, fontWeight: "700", color: colors.danger },
-  hint: { fontSize: 12, color: colors.inactive, marginTop: 8, marginBottom: 24 },
-  reminderRow: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: colors.card, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: colors.border,
-    padding: 16, width: "100%",
-  },
-  reminderText: { flex: 1 },
-  reminderTitle: { fontSize: 15, fontWeight: "800", color: colors.text, marginBottom: 4 },
-  reminderSub: { fontSize: 13, color: colors.textSoft },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1, backgroundColor: colors.background,
+      padding: 20, paddingTop: 60,
+    },
+    pressed: { opacity: 0.7 },
+    hero: {
+      borderRadius: radius.xl, padding: 24, alignItems: "center",
+      marginBottom: 24, borderWidth: 1, borderColor: colors.border,
+    },
+    title: { fontSize: 32, fontWeight: "800", color: colors.text, marginBottom: 6 },
+    subtitle: { fontSize: 15, color: colors.textSoft, marginBottom: 20 },
+    cta: {
+      flexDirection: "row", alignItems: "center", gap: 6,
+      backgroundColor: colors.primary, borderRadius: radius.lg,
+      paddingVertical: 14, paddingHorizontal: 32,
+    },
+    ctaText: { fontSize: 17, fontWeight: "800", color: "#FFFFFF" },
+    sectionHeader: {
+      flexDirection: "row", alignItems: "center",
+      marginBottom: 12,
+    },
+    sectionTitle: { fontSize: 17, fontWeight: "800", color: colors.text, marginRight: 8 },
+    countBadge: {
+      backgroundColor: colors.primarySoft, borderRadius: radius.round,
+      paddingHorizontal: 10, paddingVertical: 3,
+    },
+    countText: { fontSize: 12, fontWeight: "800", color: colors.primaryDeep },
+    emptyCard: {
+      alignItems: "center", padding: 28,
+      backgroundColor: colors.card, borderRadius: radius.lg,
+      borderWidth: 1, borderColor: colors.border, borderStyle: "dashed",
+      marginBottom: 8,
+    },
+    empty: {
+      fontSize: 14, color: colors.textSoft, textAlign: "center", lineHeight: 22,
+      marginTop: 12,
+    },
+    list: { width: "100%" },
+    card: {
+      flexDirection: "row", alignItems: "center",
+      backgroundColor: colors.card, borderRadius: radius.lg,
+      borderWidth: 1, borderColor: colors.border,
+      padding: 14, marginBottom: 10,
+    },
+    avatar: {
+      width: 44, height: 44, borderRadius: 22,
+      backgroundColor: colors.primarySoft,
+      alignItems: "center", justifyContent: "center", marginRight: 12,
+    },
+    avatarText: { fontSize: 18, fontWeight: "800", color: colors.primaryDeep },
+    cardText: { flex: 1 },
+    cardName: { fontSize: 17, fontWeight: "800", color: colors.text, marginBottom: 4 },
+    cardSub: { fontSize: 13, color: colors.textSoft },
+    reminderRow: {
+      flexDirection: "row", alignItems: "center",
+      backgroundColor: colors.card, borderRadius: radius.lg,
+      borderWidth: 1, borderColor: colors.border,
+      padding: 14, width: "100%", marginTop: 16,
+    },
+    reminderIcon: {
+      width: 40, height: 40, borderRadius: 20,
+      alignItems: "center", justifyContent: "center", marginRight: 12,
+    },
+    reminderText: { flex: 1 },
+    reminderTitle: { fontSize: 15, fontWeight: "800", color: colors.text, marginBottom: 4 },
+    reminderSub: { fontSize: 13, color: colors.textSoft },
+  });
