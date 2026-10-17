@@ -83,6 +83,14 @@ const HANJA_BRANCH: Record<string, string> = {
   午: "오", 未: "미", 申: "신", 酉: "유", 戌: "술", 亥: "해",
 };
 
+/** 한자 간지 → 한글 (예: 甲子 → 갑자) */
+export function hanjaToKorean(hanja2: string): string {
+  if (hanja2.length < 2) return hanja2;
+  const stem = HANJA_STEM[hanja2[0]] ?? hanja2[0];
+  const branch = HANJA_BRANCH[hanja2[1]] ?? hanja2[1];
+  return stem + branch;
+}
+
 // ---------------------------------------------------------------------------
 // 십성 (十星)
 // ---------------------------------------------------------------------------
