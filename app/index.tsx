@@ -157,6 +157,20 @@ export default function Home() {
         />
       )}
 
+      <Pressable
+        style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}
+        onPress={() => router.push("/match")}
+      >
+        <View style={[styles.reminderIcon, { backgroundColor: c.primarySoft }]}>
+          <MaterialIcons name="favorite" size={22} color={c.primaryDeep} />
+        </View>
+        <View style={styles.reminderText}>
+          <Text style={styles.reminderTitle}>궁합 보기</Text>
+          <Text style={styles.reminderSub}>두 사람의 인연을 점쳐봐</Text>
+        </View>
+        <MaterialIcons name="chevron-right" size={24} color={c.inactive} />
+      </Pressable>
+
       <View style={styles.reminderRow}>
         <View style={[styles.reminderIcon, { backgroundColor: c.primarySoft }]}>
           <MaterialIcons name="notifications-none" size={22} color={c.primaryDeep} />
@@ -238,6 +252,12 @@ const createStyles = (colors: ThemeColors) =>
     stemText: { fontSize: 11, fontWeight: "800", color: colors.primaryDeep, letterSpacing: 0.3 },
     cardSub: { fontSize: 13, color: colors.textSoft },
     reminderRow: {
+      flexDirection: "row", alignItems: "center",
+      backgroundColor: colors.card, borderRadius: radius.lg,
+      borderWidth: 1, borderColor: colors.border,
+      padding: 14, width: "100%", marginTop: 16,
+    },
+    matchRow: {
       flexDirection: "row", alignItems: "center",
       backgroundColor: colors.card, borderRadius: radius.lg,
       borderWidth: 1, borderColor: colors.border,

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -60,6 +60,7 @@ function PillarCard({ label, pillar, sipsin }: { label: string; pillar: Pillar |
 function SajuTab({ input }: { input: any }) {
   const styles = useStyles();
   const c = useColors();
+  const router = useRouter();
   const result = useMemo(() => calcSaju(input), [input]);
   const sipsin = useMemo(() => getPillarsSipsin(result), [result]);
   const pillars: (Pillar | null)[] = [result.time, result.day, result.month, result.year];
@@ -100,16 +101,20 @@ function SajuTab({ input }: { input: any }) {
         })}
       </View>
       <Text style={styles.sectionTitle}>일간 — {result.dayStem}</Text>
-      <LinearGradient colors={useIsDark() ? ["#33241A", "#2A1D12"] : ["#FFF1E2", "#FFE4C8"]} style={styles.teaserCard}>
-        <MaterialIcons name="lock" size={20} color={c.primaryDeep} />
-        <Text style={styles.teaserTitle}>{result.dayStem}일간의 진짜 성격 풀이</Text>
-        <Text style={styles.teaserBody}>
-          일간은 '나 자신'을 뜻한다. 성격, 강점, 약점까지 담은 정통사주 리포트에서 확인하자.
-        </Text>
-        <View style={styles.teaserBadge}>
-          <Text style={styles.teaserBadgeText}>준비 중</Text>
-        </View>
-      </LinearGradient>
+      <Pressable
+        onPress={() => router.push({ pathname: "/report", params: { data: JSON.stringify(input) } })}
+      >
+        <LinearGradient colors={useIsDark() ? ["#33241A", "#2A1D12"] : ["#FFF1E2", "#FFE4C8"]} style={styles.teaserCard}>
+          <MaterialIcons name="lock" size={20} color={c.primaryDeep} />
+          <Text style={styles.teaserTitle}>{result.dayStem}일간의 진짜 성격 풀이</Text>
+          <Text style={styles.teaserBody}>
+            일간은 '나 자신'을 뜻한다. 성격, 강점, 약점까지 담은 정통사주 리포트에서 확인하자.
+          </Text>
+          <View style={styles.teaserBadge}>
+            <Text style={styles.teaserBadgeText}>리포트 보기</Text>
+          </View>
+        </LinearGradient>
+      </Pressable>
     </View>
   );
 }
