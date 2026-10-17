@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
+import { MaterialIcons } from "@expo/vector-icons";
 import { colors, ohengColors, radius } from "../src/theme";
 import { calcSaju, getPillarsSipsin, Pillar, Oheng } from "../src/lib/saju";
 import { calcDailyFortune } from "../src/lib/fortune";
@@ -88,39 +91,108 @@ function SajuTab({ input }: { input: any }) {
 // ---------------------------------------------------------------------------
 // 오늘의 운세 탭
 // ---------------------------------------------------------------------------
+const LUCKY_COLOR_HEX: Record<string, string> = {
+  초록: "#2E9E5B",
+  빨강: "#E5484D",
+  노랑: "#E5A50A",
+  흰색: "#FFFFFF",
+  검정: "#332E29",
+};
+
+const CATEGORY_META = [
+  { key: "total", label: "총운", icon: "wb-sunny" as const, tint: "#FFF1E2", iconColor: "#D96C1E" },
+  { key: "love", label: "애정운", icon: "favorite" as const, tint: "#FFE0E8", iconColor: "#E5484D" },
+  { key: "money", label: "재물운", icon: "payments" as const, tint: "#DCF3E4", iconColor: "#2E9E5B" },
+  { key: "health", label: "건강운", icon: "spa" as const, tint: "#E1E9FB", iconColor: "#3B82F6" },
+];
+
+function ScoreRing({ score }: { score: number }) {
+  const size = 148;
+  const stroke = 13;
+  const r = (size - stroke) / 2;
+  const c = size / 2;
+  const circ = 2 * Math.PI * r;
+  const progress = Math.min(1, Math.max(0, score / 100));
+  return (
+    <View style={{ width: size, height: size }}>
+      <Svg width={size} height={size}>
+        <Defs>
+          <SvgGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor="#FF8C42" />
+            <Stop offset="1" stopColor="#D96C1E" />
+          </SvgGradient>
+        </Defs>
+        <Circle cx={c} cy={c} r={r} stroke="#F3E4CE" strokeWidth={stroke} fill="none" />
+        <Circle
+          cx={c} cy={c} r={r}
+          stroke="url(#scoreGrad)" strokeWidth={stroke} fill="none"
+          strokeDasharray={`${circ * progress} ${circ}`}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${c} ${c})`}
+        />
+      </Svg>
+      <View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center" }]}>
+        <Text style={styles.ringScore}>{score}</Text>
+        <Text style={styles.ringUnit}>점</Text>
+      </View>
+    </View>
+  );
+}
+
 function DailyTab({ input }: { input: any }) {
   const fortune = useMemo(() => {
     const r = calcSaju(input);
     return calcDailyFortune(input.year, input.month, input.day, r.dayStem);
   }, [input]);
 
-  const categories = [
-    { label: "총운", text: fortune.text.total },
-    { label: "애정운", text: fortune.text.love },
-    { label: "재물운", text: fortune.text.money },
-    { label: "건강운", text: fortune.text.health },
+  const categories = CATEGORY_META.map((m) => ({
+    ...m,
+    text: fortune.text[m.key as keyof typeof fortune.text],
+  }));
+
+  const luckyItems = [
+    { icon: "palette" as const, label: "행운의 색", value: fortune.luckyColor, swatch: LUCKY_COLOR_HEX[fortune.luckyColor] ?? colors.primary },
+    { icon: "tag" as const, label: "행운의 숫자", value: String(fortune.luckyNumber) },
+    { icon: "explore" as const, label: "행운의 방향", value: fortune.luckyDirection },
   ];
 
   return (
     <View>
-      <Text style={styles.title}>오늘의 운세</Text>
-      <Text style={styles.subtitle}>{fortune.dateLabel} · 일진 {fortune.dayPillar.korean}({fortune.dayPillar.hanja})</Text>
-      <View style={styles.scoreCard}>
-        <Text style={styles.scoreLabel}>오늘의 총운</Text>
-        <Text style={styles.score}>{fortune.score}점</Text>
-        <Text style={styles.sipsinBig}>{fortune.sipsin}의 날</Text>
-      </View>
-      {categories.map((c) => (
-        <View key={c.label} style={styles.card}>
-          <Text style={styles.cardTitle}>{c.label}</Text>
-          <Text style={styles.body}>{c.text}</Text>
+      <LinearGradient colors={["#FFE7C9", "#FFF6E9"]} style={styles.heroCard}>
+        <Text style={styles.heroDate}>{fortune.dateLabel}</Text>
+        <Text style={styles.heroIljin}>일진 {fortune.dayPillar.korean}({fortune.dayPillar.hanja})</Text>
+        <View style={{ marginVertical: 12 }}>
+          <ScoreRing score={fortune.score} />
+        </View>
+        <View style={styles.sipsinBadge}>
+          <Text style={styles.sipsinBadgeText}>{fortune.sipsin}의 날</Text>
+        </View>
+      </LinearGradient>
+
+      {categories.map((cat) => (
+        <View key={cat.label} style={styles.catCard}>
+          <View style={[styles.catIcon, { backgroundColor: cat.tint }]}>
+            <MaterialIcons name={cat.icon} size={22} color={cat.iconColor} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.catLabel}>{cat.label}</Text>
+            <Text style={styles.catBody}>{cat.text}</Text>
+          </View>
         </View>
       ))}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>행운 요소</Text>
-        <Text style={styles.body}>
-          행운의 색 {fortune.luckyColor} · 행운의 숫자 {fortune.luckyNumber} · 행운의 방향 {fortune.luckyDirection}
-        </Text>
+
+      <Text style={styles.sectionTitle}>행운 요소</Text>
+      <View style={styles.luckyRow}>
+        {luckyItems.map((item) => (
+          <View key={item.label} style={styles.luckyChip}>
+            <MaterialIcons name={item.icon} size={20} color={colors.primaryDeep} />
+            <Text style={styles.luckyLabel}>{item.label}</Text>
+            {item.swatch ? (
+              <View style={[styles.colorDot, { backgroundColor: item.swatch }]} />
+            ) : null}
+            <Text style={styles.luckyValue}>{item.value}</Text>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -287,6 +359,43 @@ const styles = StyleSheet.create({
   scoreLabel: { fontSize: 14, color: colors.textSoft, fontWeight: "600" },
   score: { fontSize: 44, fontWeight: "800", color: colors.primaryDeep, marginVertical: 4 },
   sipsinBig: { fontSize: 16, fontWeight: "700", color: colors.text },
+  // 오늘의 운세 — 히어로 + 카테고리 + 행운 요소
+  heroCard: {
+    borderRadius: radius.xl, padding: 20, alignItems: "center",
+    marginBottom: 16, borderWidth: 1, borderColor: "#F5DFC0",
+  },
+  heroDate: { fontSize: 14, fontWeight: "700", color: colors.textSoft },
+  heroIljin: { fontSize: 13, color: colors.textSoft, marginTop: 2 },
+  ringScore: { fontSize: 40, fontWeight: "800", color: colors.text, lineHeight: 44 },
+  ringUnit: { fontSize: 14, fontWeight: "700", color: colors.textSoft },
+  sipsinBadge: {
+    backgroundColor: colors.text, borderRadius: radius.round,
+    paddingHorizontal: 16, paddingVertical: 7,
+  },
+  sipsinBadgeText: { fontSize: 15, fontWeight: "800", color: "#FFFFFF" },
+  catCard: {
+    flexDirection: "row", backgroundColor: colors.card,
+    borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
+    padding: 14, marginBottom: 12, alignItems: "flex-start",
+  },
+  catIcon: {
+    width: 40, height: 40, borderRadius: 20,
+    alignItems: "center", justifyContent: "center", marginRight: 12,
+  },
+  catLabel: { fontSize: 14, fontWeight: "800", color: colors.text, marginBottom: 4 },
+  catBody: { fontSize: 14, lineHeight: 21, color: colors.text },
+  luckyRow: { flexDirection: "row", gap: 10, marginBottom: 8 },
+  luckyChip: {
+    flex: 1, backgroundColor: colors.card, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: colors.border,
+    padding: 12, alignItems: "center",
+  },
+  luckyLabel: { fontSize: 12, color: colors.textSoft, fontWeight: "600", marginTop: 6 },
+  luckyValue: { fontSize: 16, fontWeight: "800", color: colors.text, marginTop: 2 },
+  colorDot: {
+    width: 22, height: 22, borderRadius: 11, marginTop: 6,
+    borderWidth: 1, borderColor: colors.border,
+  },
   guaHanja: { fontSize: 40, fontWeight: "800", color: colors.text, marginBottom: 8 },
   guaName: { fontSize: 18, fontWeight: "800", color: colors.primaryDeep, marginBottom: 12 },
   monthRow: {
