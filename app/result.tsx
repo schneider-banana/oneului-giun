@@ -17,6 +17,12 @@ type Tab = (typeof TABS)[number];
 // ---------------------------------------------------------------------------
 // 사주팔자 탭
 // ---------------------------------------------------------------------------
+const STEM_WUXING: Record<string, string> = {
+  갑: "목", 을: "목", 병: "화", 정: "화",
+  무: "토", 기: "토", 경: "금", 신: "금",
+  임: "수", 계: "수",
+};
+
 function PillarCard({ label, pillar, sipsin }: { label: string; pillar: Pillar | null; sipsin: string | null }) {
   if (!pillar) {
     return (
@@ -26,13 +32,20 @@ function PillarCard({ label, pillar, sipsin }: { label: string; pillar: Pillar |
       </View>
     );
   }
+  const wx = STEM_WUXING[pillar.stem] ?? "토";
+  const wxColor = ohengColors[wx];
   return (
     <View style={styles.pillar}>
+      <View style={[styles.pillarStrip, { backgroundColor: wxColor }]} />
       <Text style={styles.pillarLabel}>{label}주</Text>
       <Text style={styles.hanja}>{pillar.hanja[0]}</Text>
       <Text style={styles.hanja}>{pillar.hanja[1]}</Text>
       <Text style={styles.korean}>{pillar.korean}</Text>
-      {sipsin && <Text style={styles.sipsin}>{sipsin}</Text>}
+      {sipsin && (
+        <Text style={[styles.sipsin, { color: wxColor, backgroundColor: `${wxColor}1A` }]}>
+          {sipsin}
+        </Text>
+      )}
     </View>
   );
 }
@@ -78,12 +91,16 @@ function SajuTab({ input }: { input: any }) {
         })}
       </View>
       <Text style={styles.sectionTitle}>일간 — {result.dayStem}</Text>
-      <View style={styles.card}>
-        <Text style={styles.body}>
-          일간은 '나 자신'을 뜻한다. {result.dayStem}일간의 진짜 성격 풀이는 정통사주
-          리포트에서 확인하자. (준비 중)
+      <LinearGradient colors={["#FFF1E2", "#FFE4C8"]} style={styles.teaserCard}>
+        <MaterialIcons name="lock" size={20} color={colors.primaryDeep} />
+        <Text style={styles.teaserTitle}>{result.dayStem}일간의 진짜 성격 풀이</Text>
+        <Text style={styles.teaserBody}>
+          일간은 '나 자신'을 뜻한다. 성격, 강점, 약점까지 담은 정통사주 리포트에서 확인하자.
         </Text>
-      </View>
+        <View style={styles.teaserBadge}>
+          <Text style={styles.teaserBadgeText}>준비 중</Text>
+        </View>
+      </LinearGradient>
     </View>
   );
 }
@@ -208,34 +225,48 @@ function TojeongTab({ input }: { input: any }) {
     [input, year]
   );
 
+  const levelMeta: Record<string, { bg: string; fg: string }> = {
+    길: { bg: "#DCF3E4", fg: "#2E9E5B" },
+    평: { bg: "#F1E7D6", fg: "#8A8175" },
+    흉: { bg: "#FFE0E8", fg: "#E5484D" },
+  };
+
   return (
     <View>
-      <Text style={styles.title}>{year}년 토정비결</Text>
-      <Text style={styles.subtitle}>생년월일시의 수리로 뽑은 올해의 괘</Text>
-      <View style={styles.scoreCard}>
-        <Text style={styles.guaHanja}>{tj.gua.hanja}</Text>
-        <Text style={styles.guaName}>제{tj.gua.no}괘 {tj.gua.name}</Text>
-        <Text style={styles.body}>{tj.gua.meaning}</Text>
-      </View>
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>올해의 조언</Text>
-        <Text style={styles.body}>{tj.gua.advice}</Text>
-      </View>
-      <Text style={styles.sectionTitle}>월별 운세</Text>
-      {tj.months.map((m) => (
-        <View key={m.month} style={styles.monthRow}>
-          <Text style={styles.monthNum}>{m.month}월</Text>
-          <Text
-            style={[
-              styles.monthLevel,
-              { color: m.level === "길" ? "#2E9E5B" : m.level === "흉" ? "#E5484D" : colors.textSoft },
-            ]}
-          >
-            {m.level}
-          </Text>
-          <Text style={styles.monthText}>{m.text}</Text>
+      <LinearGradient colors={["#3A2E22", "#241C14"]} style={styles.guaHero}>
+        <Text style={styles.guaYear}>{year}년 토정비결</Text>
+        <Text style={styles.guaHanjaLight}>{tj.gua.hanja}</Text>
+        <Text style={styles.guaNameLight}>
+          제{tj.gua.no}괘 · {tj.gua.name}
+        </Text>
+        <Text style={styles.guaMeaningLight}>{tj.gua.meaning}</Text>
+      </LinearGradient>
+
+      <View style={styles.adviceCard}>
+        <View style={[styles.catIcon, { backgroundColor: "#FFF1E2" }]}>
+          <MaterialIcons name="tips-and-updates" size={22} color="#D96C1E" />
         </View>
-      ))}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.catLabel}>올해의 조언</Text>
+          <Text style={styles.catBody}>{tj.gua.advice}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>월별 운세</Text>
+      {tj.months.map((m) => {
+        const lm = levelMeta[m.level] ?? levelMeta["평"];
+        return (
+          <View key={m.month} style={styles.monthCard}>
+            <View style={styles.monthTop}>
+              <Text style={styles.monthNum}>{m.month}월</Text>
+              <View style={[styles.levelPill, { backgroundColor: lm.bg }]}>
+                <Text style={[styles.levelText, { color: lm.fg }]}>{m.level}</Text>
+              </View>
+            </View>
+            <Text style={styles.monthText}>{m.text}</Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -253,29 +284,47 @@ function DaeunTab({ input }: { input: any }) {
 
   return (
     <View>
-      <Text style={styles.title}>평생운 · 대운</Text>
-      <Text style={styles.subtitle}>10년 주기로 바뀌는 큰 운의 흐름</Text>
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>
-          {seyun.year}년 세운 — {seyun.ganZhi.korean}({seyun.ganZhi.hanja}) · {seyun.sipsin}
+      <LinearGradient colors={["#E4EBFB", "#F4F7FF"]} style={styles.seyunHero}>
+        <Text style={styles.seyunYear}>{seyun.year}년 세운</Text>
+        <Text style={styles.seyunGanzhi}>
+          {seyun.ganZhi.korean}({seyun.ganZhi.hanja})
         </Text>
-        <Text style={styles.body}>{seyun.text}</Text>
-      </View>
-      <Text style={styles.sectionTitle}>대운 흐름</Text>
-      {daeyuns.map((d) => (
-        <View key={d.startAge} style={[styles.card, d.isCurrent && styles.currentCard]}>
-          <View style={styles.daeyunHeader}>
-            <Text style={styles.daeyunTitle}>
-              {d.startAge}–{d.endAge}세 ({d.startYear}–{d.endYear})
-            </Text>
-            {d.isCurrent && <Text style={styles.nowBadge}>현재</Text>}
-          </View>
-          <Text style={styles.daeyunGanzhi}>
-            {d.ganZhi.korean}({d.ganZhi.hanja}) · {d.sipsin}
-          </Text>
-          <Text style={styles.body}>{d.text}</Text>
+        <View style={styles.sipsinBadgeLight}>
+          <Text style={styles.sipsinBadgeLightText}>{seyun.sipsin}</Text>
         </View>
-      ))}
+        <Text style={styles.seyunText}>{seyun.text}</Text>
+      </LinearGradient>
+
+      <Text style={styles.sectionTitle}>대운 흐름</Text>
+      <Text style={styles.timelineHint}>10년 주기로 바뀌는 큰 운의 흐름</Text>
+      <View style={styles.timeline}>
+        {daeyuns.map((d, i) => (
+          <View key={d.startAge} style={styles.tlItem}>
+            <View style={styles.tlRail}>
+              <View style={[styles.tlDot, d.isCurrent && styles.tlDotActive]} />
+              {i < daeyuns.length - 1 && <View style={styles.tlLine} />}
+            </View>
+            <View style={[styles.tlCard, d.isCurrent && styles.tlCardActive]}>
+              <View style={styles.daeyunHeader}>
+                <Text style={styles.daeyunTitle}>
+                  {d.startAge}–{d.endAge}세
+                </Text>
+                {d.isCurrent ? (
+                  <Text style={styles.nowBadge}>현재</Text>
+                ) : (
+                  <Text style={styles.daeyunYears}>
+                    {d.startYear}–{d.endYear}
+                  </Text>
+                )}
+              </View>
+              <Text style={styles.daeyunGanzhi}>
+                {d.ganZhi.korean}({d.ganZhi.hanja}) · {d.sipsin}
+              </Text>
+              <Text style={styles.body}>{d.text}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
@@ -396,17 +445,78 @@ const styles = StyleSheet.create({
     width: 22, height: 22, borderRadius: 11, marginTop: 6,
     borderWidth: 1, borderColor: colors.border,
   },
+  // 토정비결
+  guaHero: {
+    borderRadius: radius.xl, padding: 24, alignItems: "center", marginBottom: 16,
+  },
+  guaYear: { fontSize: 14, fontWeight: "700", color: "#C9BBA8", marginBottom: 12 },
+  guaHanjaLight: { fontSize: 52, fontWeight: "800", color: "#F5C66B", lineHeight: 60 },
+  guaNameLight: { fontSize: 18, fontWeight: "800", color: "#FFFFFF", marginTop: 10 },
+  guaMeaningLight: { fontSize: 14, lineHeight: 22, color: "#D8CBB8", marginTop: 10, textAlign: "center" },
+  adviceCard: {
+    flexDirection: "row", backgroundColor: colors.card,
+    borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border,
+    padding: 14, marginBottom: 20, alignItems: "flex-start",
+  },
+  monthCard: {
+    backgroundColor: colors.card, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: colors.border,
+    padding: 14, marginBottom: 10,
+  },
+  monthTop: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
+  monthNum: { fontSize: 15, fontWeight: "800", color: colors.text, marginRight: 8 },
+  levelPill: { borderRadius: radius.round, paddingHorizontal: 10, paddingVertical: 3 },
+  levelText: { fontSize: 13, fontWeight: "800" },
+  monthText: { fontSize: 13, color: colors.textSoft, lineHeight: 19 },
+  // 평생운
+  seyunHero: {
+    borderRadius: radius.xl, padding: 20, alignItems: "center", marginBottom: 20,
+    borderWidth: 1, borderColor: "#D5DDF2",
+  },
+  seyunYear: { fontSize: 14, fontWeight: "700", color: colors.textSoft },
+  seyunGanzhi: { fontSize: 26, fontWeight: "800", color: colors.text, marginTop: 6 },
+  sipsinBadgeLight: {
+    backgroundColor: "#3B82F6", borderRadius: radius.round,
+    paddingHorizontal: 14, paddingVertical: 5, marginTop: 10,
+  },
+  sipsinBadgeLightText: { fontSize: 14, fontWeight: "800", color: "#FFFFFF" },
+  seyunText: { fontSize: 14, lineHeight: 22, color: colors.text, marginTop: 12, textAlign: "center" },
+  timelineHint: { fontSize: 13, color: colors.textSoft, marginBottom: 14 },
+  timeline: { marginBottom: 8 },
+  tlItem: { flexDirection: "row", marginBottom: 4 },
+  tlRail: { width: 24, alignItems: "center" },
+  tlDot: {
+    width: 14, height: 14, borderRadius: 7, marginTop: 18,
+    backgroundColor: colors.card, borderWidth: 3, borderColor: colors.inactive,
+  },
+  tlDotActive: { borderColor: colors.primary, backgroundColor: colors.primary },
+  tlLine: { width: 3, flex: 1, backgroundColor: colors.border, marginVertical: 2 },
+  tlCard: {
+    flex: 1, backgroundColor: colors.card, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: colors.border,
+    padding: 14, marginBottom: 12, marginLeft: 8,
+  },
+  tlCardActive: { borderColor: colors.primary, borderWidth: 2 },
+  daeyunYears: { fontSize: 12, color: colors.textSoft, fontWeight: "600" },
+  // 사주팔자
+  pillarStrip: {
+    position: "absolute", top: 0, left: 0, right: 0, height: 5,
+    borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg,
+  },
+  teaserCard: {
+    borderRadius: radius.xl, padding: 20, alignItems: "center",
+    borderWidth: 1, borderColor: "#F5DFC0", marginBottom: 8,
+  },
+  teaserTitle: { fontSize: 16, fontWeight: "800", color: colors.text, marginTop: 8 },
+  teaserBody: { fontSize: 14, lineHeight: 21, color: colors.textSoft, marginTop: 8, textAlign: "center" },
+  teaserBadge: {
+    backgroundColor: colors.text, borderRadius: radius.round,
+    paddingHorizontal: 14, paddingVertical: 6, marginTop: 12,
+  },
+  teaserBadgeText: { fontSize: 13, fontWeight: "800", color: "#FFFFFF" },
   guaHanja: { fontSize: 40, fontWeight: "800", color: colors.text, marginBottom: 8 },
   guaName: { fontSize: 18, fontWeight: "800", color: colors.primaryDeep, marginBottom: 12 },
-  monthRow: {
-    flexDirection: "row", alignItems: "center",
-    backgroundColor: colors.card, borderRadius: radius.md,
-    borderWidth: 1, borderColor: colors.border,
-    padding: 12, marginBottom: 8,
-  },
-  monthNum: { fontSize: 14, fontWeight: "800", color: colors.text, width: 40 },
-  monthLevel: { fontSize: 14, fontWeight: "800", width: 28 },
-  monthText: { fontSize: 13, color: colors.textSoft, flex: 1, lineHeight: 19 },
+
   currentCard: { borderColor: colors.primary, borderWidth: 2 },
   daeyunHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
   daeyunTitle: { fontSize: 15, fontWeight: "800", color: colors.text },
