@@ -45,6 +45,7 @@ function SajuTab({ input }: { input: any }) {
     <View>
       <Text style={styles.title}>사주팔자</Text>
       <Text style={styles.subtitle}>
+        {input.profileName ? `${input.profileName} · ` : ""}
         {input.year}년 {input.month}월 {input.day}일 {input.isLunar ? "(음력)" : "(양력)"}
         {input.hour >= 0 ? ` ${input.hour}시` : " 시간 미상"} · {input.gender === 1 ? "남" : "여"}
       </Text>

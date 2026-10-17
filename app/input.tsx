@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { colors, radius } from "../src/theme";
 import { Stepper } from "../src/components/Stepper";
+import { FREE_LIMIT, listProfiles, saveProfile } from "../src/lib/profiles";
 
 export default function InputScreen() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [isLunar, setIsLunar] = useState(false);
   const [year, setYear] = useState(1990);
   const [month, setMonth] = useState(5);
@@ -17,7 +19,26 @@ export default function InputScreen() {
   const daysInMonth = new Date(year, month, 0).getDate();
   const safeDay = Math.min(day, daysInMonth);
 
-  const go = () => {
+  const go = async () => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      Alert.alert("이름 입력", "누구의 사주인지 이름을 입력해주세요.");
+      return;
+    }
+    const existing = await listProfiles();
+    if (existing.length >= FREE_LIMIT) {
+      Alert.alert(
+        "보관함 가득 참",
+        `무료는 ${FREE_LIMIT}명까지 저장할 수 있어요.\n(VIP 무제한 — 준비 중)`
+      );
+      return;
+    }
+    const profile = await saveProfile({
+      name: trimmed,
+      year, month, day: safeDay,
+      hour: hourUnknown ? -1 : hour,
+      isLunar, gender,
+    });
     router.push({
       pathname: "/result",
       params: {
@@ -25,6 +46,7 @@ export default function InputScreen() {
           year, month, day: safeDay,
           hour: hourUnknown ? -1 : hour,
           isLunar, gender,
+          profileId: profile.id, profileName: profile.name,
         }),
       },
     });
@@ -33,6 +55,18 @@ export default function InputScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>생년월일을 입력하세요</Text>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>이름</Text>
+        <TextInput
+          style={styles.nameInput}
+          value={name}
+          onChangeText={setName}
+          placeholder="예: 나, 엄마, 연인"
+          placeholderTextColor={colors.inactive}
+          maxLength={12}
+        />
+      </View>
 
       <View style={styles.toggleRow}>
         {[
@@ -130,6 +164,12 @@ const styles = StyleSheet.create({
   unknownText: { fontSize: 14, fontWeight: "600", color: colors.textSoft },
   unknownTextActive: { color: colors.primaryDeep },
   note: { fontSize: 14, color: colors.textSoft, marginTop: 8 },
+  nameInput: {
+    fontSize: 17, color: colors.text,
+    borderWidth: 1, borderColor: colors.border, borderRadius: radius.md,
+    paddingHorizontal: 14, paddingVertical: 12, marginTop: 10,
+    backgroundColor: colors.background,
+  },
   cta: {
     backgroundColor: colors.primary, borderRadius: radius.lg,
     paddingVertical: 16, alignItems: "center", marginTop: 8,
