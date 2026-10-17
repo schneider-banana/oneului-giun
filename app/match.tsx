@@ -10,6 +10,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
 import { MaterialIcons } from "@expo/vector-icons";
 import { ThemeColors, ohengColors, radius, useColors, useIsDark } from "../src/theme";
+import { PaywallSheet } from "../src/components/PaywallSheet";
 import { calcSaju } from "../src/lib/saju";
 import { calcMatch } from "../src/lib/match";
 import { listProfiles, Profile } from "../src/lib/profiles";
@@ -63,16 +64,12 @@ const scoreCenter: any = {
 const scoreTextBase: any = { fontSize: 44, fontWeight: "800" };
 const scoreUnitBase: any = { fontSize: 15, marginTop: 2 };
 
-function LockScreen() {
+function LockScreen({ onUnlocked }: { onUnlocked: () => void }) {
   const styles = useStyles();
   const c = useColors();
   const isDark = useIsDark();
-  const buy = (kind: string) => {
-    Alert.alert(
-      "결제 준비 중",
-      `${kind} 결제는 RevenueCat 연동 후 이용할 수 있어. 조금만 기다려줘.`
-    );
-  };
+  const [paywall, setPaywall] = useState<"vip" | "report" | "compat" | null>(null);
+  const buy = (kind: "vip" | "report" | "compat") => setPaywall(kind);
   return (
     <ScrollView contentContainerStyle={styles.lockContent}>
       <LinearGradient
@@ -87,18 +84,25 @@ function LockScreen() {
       </LinearGradient>
       <Pressable
         style={({ pressed }) => [styles.buyBtn, pressed && styles.pressed]}
-        onPress={() => buy("VIP 구독")}
+        onPress={() => buy("vip")}
       >
         <Text style={styles.buyBtnText}>VIP로 무제한 열람</Text>
         <Text style={styles.buyBtnSub}>월 3,900원 · 모든 유료 콘텐츠</Text>
       </Pressable>
       <Pressable
         style={({ pressed }) => [styles.buyBtnOutline, pressed && styles.pressed]}
-        onPress={() => buy("건당")}
+        onPress={() => buy("compat")}
       >
         <Text style={styles.buyBtnOutlineText}>건당 결제로 궁합 열람</Text>
       </Pressable>
       <Text style={styles.lockNote}>결제 연동 준비 중 — 곧 만나요</Text>
+    
+      <PaywallSheet
+        visible={paywall !== null}
+        product={paywall ?? "vip"}
+        onClose={() => setPaywall(null)}
+        onUnlocked={onUnlocked}
+      />
     </ScrollView>
   );
 }
@@ -158,7 +162,7 @@ export default function MatchScreen() {
   if (!unlocked) {
     return (
       <View style={styles.container}>
-        <LockScreen />
+        <LockScreen onUnlocked={() => setUnlocked(true)} />
       </View>
     );
   }
