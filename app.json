@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "오늘의기운",
+    "slug": "oneului-giun",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "oneului-giun",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFBF4"
+      }
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
