@@ -6,6 +6,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import * as Notifications from "expo-notifications";
 import { ThemeColors, radius, useColors, useIsDark } from "../src/theme";
 import { deleteProfile, listProfiles, profileToParams, Profile } from "../src/lib/profiles";
+import { isVipActive } from "../src/lib/purchases";
 import { calcSaju } from "../src/lib/saju";
 import {
   cancelReminders, isReminderEnabled, refreshReminders,
@@ -19,6 +20,7 @@ export default function Home() {
   const styles = useMemo(() => createStyles(c), [c]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [reminderOn, setReminderOn] = useState(false);
+  const [vip, setVip] = useState(false);
   const dayStems = useMemo(() => {
     const m: Record<string, string> = {};
     for (const p of profiles) {
@@ -35,6 +37,7 @@ export default function Home() {
   useFocusEffect(
     useCallback(() => {
       listProfiles().then(setProfiles);
+      isVipActive().then(setVip);
       isReminderEnabled().then(setReminderOn);
       refreshReminders(() => listProfiles().then((ps) => ps[0] ?? null));
     }, [])
@@ -114,7 +117,7 @@ export default function Home() {
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>보관함</Text>
         <View style={styles.countBadge}>
-          <Text style={styles.countText}>{profiles.length}/3</Text>
+          <Text style={styles.countText}>{vip ? `VIP · ${profiles.length}` : `${profiles.length}/3`}</Text>
         </View>
       </View>
       {profiles.length === 0 ? (

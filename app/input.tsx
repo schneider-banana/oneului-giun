@@ -4,7 +4,9 @@ import { useRouter } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { ThemeColors, radius, useColors } from "../src/theme";
 import { Stepper } from "../src/components/Stepper";
+import { PaywallSheet } from "../src/components/PaywallSheet";
 import { FREE_LIMIT, listProfiles, saveProfile } from "../src/lib/profiles";
+import { isVipActive } from "../src/lib/purchases";
 
 export default function InputScreen() {
   const router = useRouter();
@@ -18,6 +20,7 @@ export default function InputScreen() {
   const [hour, setHour] = useState(12);
   const [hourUnknown, setHourUnknown] = useState(false);
   const [gender, setGender] = useState<1 | 0>(1); // 1=남, 0=여
+  const [paywallVisible, setPaywallVisible] = useState(false);
 
   const daysInMonth = new Date(year, month, 0).getDate();
   const safeDay = Math.min(day, daysInMonth);
@@ -29,11 +32,10 @@ export default function InputScreen() {
       return;
     }
     const existing = await listProfiles();
-    if (existing.length >= FREE_LIMIT) {
-      Alert.alert(
-        "보관함 가득 참",
-        `무료는 ${FREE_LIMIT}명까지 저장할 수 있어요.\n(VIP 무제한 — 준비 중)`
-      );
+    const vip = await isVipActive();
+    if (!vip && existing.length >= FREE_LIMIT) {
+      // 무료 3명 초과 → VIP 페이월로 유도
+      setPaywallVisible(true);
       return;
     }
     const profile = await saveProfile({
@@ -156,6 +158,13 @@ export default function InputScreen() {
         <Text style={styles.ctaText}>내 사주 보기</Text>
         <MaterialIcons name="arrow-forward" size={20} color="#FFFFFF" />
       </Pressable>
+
+      <PaywallSheet
+        visible={paywallVisible}
+        product="vip"
+        onClose={() => setPaywallVisible(false)}
+        onUnlocked={() => setPaywallVisible(false)}
+      />
     </ScrollView>
   );
 }
