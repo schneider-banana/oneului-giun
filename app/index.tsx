@@ -6,6 +6,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import * as Notifications from "expo-notifications";
 import { ThemeColors, radius, useColors, useIsDark } from "../src/theme";
 import { deleteProfile, listProfiles, profileToParams, Profile } from "../src/lib/profiles";
+import { calcSaju } from "../src/lib/saju";
 import {
   cancelReminders, isReminderEnabled, refreshReminders,
   requestReminderPermission, scheduleReminders,
@@ -18,6 +19,18 @@ export default function Home() {
   const styles = useMemo(() => createStyles(c), [c]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [reminderOn, setReminderOn] = useState(false);
+  const dayStems = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const p of profiles) {
+      try {
+        m[p.id] = calcSaju({
+          year: p.year, month: p.month, day: p.day,
+          hour: p.hour, isLunar: p.isLunar,
+        }).dayStem;
+      } catch { /* ignore */ }
+    }
+    return m;
+  }, [profiles]);
 
   useFocusEffect(
     useCallback(() => {
@@ -120,7 +133,14 @@ export default function Home() {
                 <Text style={styles.avatarText}>{item.name.slice(0, 1)}</Text>
               </View>
               <View style={styles.cardText}>
-                <Text style={styles.cardName}>{item.name}</Text>
+                <View style={styles.nameRow}>
+                  <Text style={styles.cardName}>{item.name}</Text>
+                  {dayStems[item.id] && (
+                    <View style={styles.stemBadge}>
+                      <Text style={styles.stemText}>{dayStems[item.id]}일간</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={styles.cardSub}>
                   {item.year}.{item.month}.{item.day} {item.isLunar ? "(음력)" : "(양력)"} ·{" "}
                   {item.gender === 1 ? "남" : "여"}
@@ -162,8 +182,8 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: radius.xl, padding: 24, alignItems: "center",
       marginBottom: 24, borderWidth: 1, borderColor: colors.border,
     },
-    title: { fontSize: 32, fontWeight: "800", color: colors.text, marginBottom: 6 },
-    subtitle: { fontSize: 15, color: colors.textSoft, marginBottom: 20 },
+    title: { fontSize: 30, fontWeight: "800", color: colors.text, marginBottom: 6, letterSpacing: -0.5 },
+    subtitle: { fontSize: 14, color: colors.textSoft, marginBottom: 20, letterSpacing: 1.5 },
     cta: {
       flexDirection: "row", alignItems: "center", gap: 6,
       backgroundColor: colors.primary, borderRadius: radius.lg,
@@ -204,7 +224,13 @@ const createStyles = (colors: ThemeColors) =>
     },
     avatarText: { fontSize: 18, fontWeight: "800", color: colors.primaryDeep },
     cardText: { flex: 1 },
-    cardName: { fontSize: 17, fontWeight: "800", color: colors.text, marginBottom: 4 },
+    cardName: { fontSize: 17, fontWeight: "800", color: colors.text },
+    nameRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
+    stemBadge: {
+      backgroundColor: colors.primarySoft, borderRadius: radius.round,
+      paddingHorizontal: 8, paddingVertical: 2, marginLeft: 8,
+    },
+    stemText: { fontSize: 11, fontWeight: "800", color: colors.primaryDeep, letterSpacing: 0.3 },
     cardSub: { fontSize: 13, color: colors.textSoft },
     reminderRow: {
       flexDirection: "row", alignItems: "center",

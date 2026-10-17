@@ -385,12 +385,13 @@ const createStyles = (colors: ThemeColors) =>
   container: { flex: 1, backgroundColor: colors.background },
   tabBar: {
     flexDirection: "row", backgroundColor: colors.card,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
+    borderRadius: radius.round, borderWidth: 1, borderColor: colors.border,
+    padding: 4, margin: 16, marginBottom: 4,
   },
-  tab: { flex: 1, paddingVertical: 14, alignItems: "center" },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: colors.primary },
-  tabText: { fontSize: 14, fontWeight: "600", color: colors.textSoft },
-  tabTextActive: { color: colors.primaryDeep, fontWeight: "800" },
+  tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: radius.round },
+  tabActive: { backgroundColor: colors.text },
+  tabText: { fontSize: 13, fontWeight: "700", color: colors.textSoft, letterSpacing: -0.2 },
+  tabTextActive: { color: colors.background, fontWeight: "800" },
   content: { padding: 20, paddingBottom: 40 },
   title: { fontSize: 22, fontWeight: "800", color: colors.text },
   subtitle: { fontSize: 14, color: colors.textSoft, marginTop: 4, marginBottom: 16 },
@@ -544,7 +545,7 @@ const createStyles = (colors: ThemeColors) =>
   nowBadge: {
     fontSize: 12, fontWeight: "800", color: "#FFFFFF",
     backgroundColor: colors.primary, paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: radius.round,
+    borderRadius: radius.round, letterSpacing: 0.5,
   },
   daeyunGanzhi: { fontSize: 14, fontWeight: "700", color: colors.primaryDeep, marginBottom: 8 },
   });
