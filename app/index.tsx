@@ -1,18 +1,37 @@
-import { useCallback, useState } from "react";
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, FlatList, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
+import * as Notifications from "expo-notifications";
 import { colors, radius } from "../src/theme";
 import { deleteProfile, listProfiles, profileToParams, Profile } from "../src/lib/profiles";
+import {
+  cancelReminders, isReminderEnabled, refreshReminders,
+  requestReminderPermission, scheduleReminders,
+} from "../src/lib/reminder";
 
 export default function Home() {
   const router = useRouter();
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [reminderOn, setReminderOn] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
       listProfiles().then(setProfiles);
+      isReminderEnabled().then(setReminderOn);
+      refreshReminders(() => listProfiles().then((ps) => ps[0] ?? null));
     }, [])
   );
+
+  // 알림 탭 → 해당 사주 결과로 이동
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener(async (res) => {
+      const pid = res.notification.request.content.data?.profileId as string | undefined;
+      const ps = await listProfiles();
+      const p = ps.find((x) => x.id === pid) ?? ps[0];
+      if (p) router.push({ pathname: "/result", params: { data: profileToParams(p) } });
+    });
+    return () => sub.remove();
+  }, []);
 
   const openProfile = (p: Profile) => {
     router.push({ pathname: "/result", params: { data: profileToParams(p) } });
@@ -30,6 +49,26 @@ export default function Home() {
         },
       },
     ]);
+  };
+
+  const toggleReminder = async (on: boolean) => {
+    if (on) {
+      const ps = await listProfiles();
+      if (ps.length === 0) {
+        Alert.alert("사주 저장 필요", "먼저 사주를 하나 저장해줘.");
+        return;
+      }
+      const granted = await requestReminderPermission();
+      if (!granted) {
+        Alert.alert("알림 권한", "설정에서 알림을 허용해줘.");
+        return;
+      }
+      await scheduleReminders(ps[0]);
+      setReminderOn(true);
+    } else {
+      await cancelReminders();
+      setReminderOn(false);
+    }
   };
 
   return (
@@ -74,6 +113,20 @@ export default function Home() {
       {profiles.length > 0 && (
         <Text style={styles.hint}>길게 누르면 삭제할 수 있다</Text>
       )}
+
+      <Text style={styles.sectionTitle}>알림</Text>
+      <View style={styles.reminderRow}>
+        <View style={styles.reminderText}>
+          <Text style={styles.reminderTitle}>매일 아침 7시 운세 알림</Text>
+          <Text style={styles.reminderSub}>소리 없이 조용히 도착해</Text>
+        </View>
+        <Switch
+          value={reminderOn}
+          onValueChange={toggleReminder}
+          trackColor={{ false: colors.border, true: colors.primary }}
+          thumbColor="#FFFFFF"
+        />
+      </View>
     </View>
   );
 }
@@ -114,5 +167,14 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.border,
   },
   deleteText: { fontSize: 13, fontWeight: "700", color: colors.danger },
-  hint: { fontSize: 12, color: colors.inactive, marginTop: 8 },
+  hint: { fontSize: 12, color: colors.inactive, marginTop: 8, marginBottom: 24 },
+  reminderRow: {
+    flexDirection: "row", alignItems: "center",
+    backgroundColor: colors.card, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: colors.border,
+    padding: 16, width: "100%",
+  },
+  reminderText: { flex: 1 },
+  reminderTitle: { fontSize: 15, fontWeight: "800", color: colors.text, marginBottom: 4 },
+  reminderSub: { fontSize: 13, color: colors.textSoft },
 });
