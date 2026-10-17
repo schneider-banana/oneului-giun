@@ -45,7 +45,7 @@ export default function Home() {
 
       <Text style={styles.sectionTitle}>보관함 ({profiles.length}/3)</Text>
       {profiles.length === 0 ? (
-        <Text style={styles.empty}>아직 저장된 사주가 없음.{"\n"}가족이나 연인 사주 저장해봐.</Text>
+        <Text style={styles.empty}>아직 저장된 사주가 없다.{"\n"}가족이나 연인의 사주를 저장해보자.</Text>
       ) : (
         <FlatList
           data={profiles}
@@ -72,7 +72,7 @@ export default function Home() {
         />
       )}
       {profiles.length > 0 && (
-        <Text style={styles.hint}>길게 누르면 삭제됨</Text>
+        <Text style={styles.hint}>길게 누르면 삭제할 수 있다</Text>
       )}
     </View>
   );
