@@ -77,8 +77,8 @@ function SajuTab({ input }: { input: any }) {
       <Text style={styles.sectionTitle}>일간 — {result.dayStem}</Text>
       <View style={styles.card}>
         <Text style={styles.body}>
-          일간은 '나 자신'을 뜻합니다. {result.dayStem}일간의 상세 성격 풀이는 정통사주
-          리포트에서 확인할 수 있습니다.
+          일간은 '나 자신'을 뜻함. {result.dayStem}일간의 찐 성격 풀이는 정통사주
+          리포트에서 확인하셈. (준비 중)
         </Text>
       </View>
     </View>
