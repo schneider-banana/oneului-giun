@@ -12,6 +12,7 @@ export default function InputScreen() {
   const [day, setDay] = useState(15);
   const [hour, setHour] = useState(12);
   const [hourUnknown, setHourUnknown] = useState(false);
+  const [gender, setGender] = useState<1 | 0>(1); // 1=남, 0=여
 
   const daysInMonth = new Date(year, month, 0).getDate();
   const safeDay = Math.min(day, daysInMonth);
@@ -23,7 +24,7 @@ export default function InputScreen() {
         data: JSON.stringify({
           year, month, day: safeDay,
           hour: hourUnknown ? -1 : hour,
-          isLunar,
+          isLunar, gender,
         }),
       },
     });
@@ -44,6 +45,23 @@ export default function InputScreen() {
             onPress={() => setIsLunar(o.value)}
           >
             <Text style={[styles.toggleText, isLunar === o.value && styles.toggleTextActive]}>
+              {o.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <View style={styles.toggleRow}>
+        {[
+          { label: "남자", value: 1 },
+          { label: "여자", value: 0 },
+        ].map((o) => (
+          <Pressable
+            key={o.label}
+            style={[styles.toggle, gender === o.value && styles.toggleActive]}
+            onPress={() => setGender(o.value as 1 | 0)}
+          >
+            <Text style={[styles.toggleText, gender === o.value && styles.toggleTextActive]}>
               {o.label}
             </Text>
           </Pressable>
