@@ -62,9 +62,12 @@ export function calcDailyFortune(
   const todayZhiKo = hanjaToKorean(todayGanZhi)[1];
 
   const sipsin = getSipsin(dayStemKorean, todayStemKo);
-  const text = DAILY_SIPSIN[sipsin];
 
   const seed = hash(`${birthY}-${birthM}-${birthD}|${today.toYmd()}`);
+  // 같은 십성이어도 날짜(+생년월일) 해시로 variant를 돌려써서 매일 다른 풀이
+  const variants = DAILY_SIPSIN[sipsin];
+  const text = variants[seed % variants.length];
+
   const score = 60 + (seed % 39); // 60-98
   const luckyNumber = 1 + (seed % 9);
 
