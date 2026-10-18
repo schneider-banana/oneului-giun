@@ -14,7 +14,7 @@ import {
 } from "../src/lib/reminder";
 
 // TODO: 실제 이메일로 교체
-const SUPPORT_EMAIL = "YOUR_EMAIL_HERE";
+const SUPPORT_EMAIL = "schneider.banana@gmail.com";
 
 export default function Home() {
   const router = useRouter();
