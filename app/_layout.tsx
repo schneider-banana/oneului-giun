@@ -18,6 +18,8 @@ export default function RootLayout() {
         <Stack.Screen name="result" options={{ title: "사주 결과" }} />
         <Stack.Screen name="report" options={{ title: "정통사주 리포트" }} />
         <Stack.Screen name="match" options={{ title: "궁합" }} />
+        <Stack.Screen name="tarot" options={{ title: "오늘의 타로" }} />
+        <Stack.Screen name="dream" options={{ title: "꿈해몽" }} />
       </Stack>
     </>
   );

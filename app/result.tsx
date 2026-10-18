@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from "react-native-svg";
+import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop, Line, Polyline } from "react-native-svg";
 import { MaterialIcons } from "@expo/vector-icons";
 import { ThemeColors, ohengColors, radius, useColors, useIsDark } from "../src/theme";
 
@@ -15,6 +15,7 @@ import { calcSaju, getPillarsSipsin, Pillar, Oheng } from "../src/lib/saju";
 import { calcDailyFortune } from "../src/lib/fortune";
 import { calcTojeong } from "../src/lib/tojeong";
 import { calcDaeyun, calcSeyun } from "../src/lib/daeun";
+import { calcBiorhythmWeek, rhythmMood } from "../src/lib/biorhythm";
 
 const PILLAR_LABELS = ["시", "일", "월", "년"] as const;
 const TABS = ["오늘의 운세", "토정비결", "평생운", "사주팔자"] as const;
@@ -174,6 +175,65 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
+const BIO_COLORS = { physical: "#E5484D", emotional: "#3B82F6", intellectual: "#2E9E5B" } as const;
+const BIO_LABELS = { physical: "신체", emotional: "감성", intellectual: "지성" } as const;
+
+/** 바이오리듬 7일 그래프 섹션 */
+function BiorhythmSection({ input }: { input: any }) {
+  const styles = useStyles();
+  const c = useColors();
+  const week = useMemo(
+    () => calcBiorhythmWeek(input.year, input.month, input.day),
+    [input]
+  );
+  const today = week[0];
+
+  const W = 320;
+  const H = 110;
+  const PAD = 8;
+  const x = (i: number) => PAD + (i / 6) * (W - PAD * 2);
+  const y = (v: number) => H / 2 - v * (H / 2 - PAD);
+  const pts = (key: "physical" | "emotional" | "intellectual") =>
+    week.map((d, i) => `${x(i)},${y(d[key])}`).join(" ");
+
+  const rows: ("physical" | "emotional" | "intellectual")[] = ["physical", "emotional", "intellectual"];
+
+  return (
+    <View style={styles.bioCard}>
+      <Text style={styles.sectionTitle}>바이오리듬</Text>
+      <Text style={styles.bioSub}>생년월일 기준 신체 · 감성 · 지성 리듬</Text>
+      <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
+        <Line x1={0} y1={H / 2} x2={W} y2={H / 2} stroke={c.border} strokeWidth={1} strokeDasharray="4 4" />
+        {rows.map((k) => (
+          <Polyline
+            key={k}
+            points={pts(k)}
+            fill="none"
+            stroke={BIO_COLORS[k]}
+            strokeWidth={2.5}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        ))}
+      </Svg>
+      <View style={styles.bioLegend}>
+        {rows.map((k) => {
+          const v = today[k];
+          return (
+            <View key={k} style={styles.bioRow}>
+              <View style={[styles.bioDot, { backgroundColor: BIO_COLORS[k] }]} />
+              <Text style={styles.bioLabel}>{BIO_LABELS[k]}</Text>
+              <Text style={[styles.bioMood, { color: v >= 0.2 ? BIO_COLORS[k] : c.textSoft }]}>
+                {rhythmMood(v)}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 function DailyTab({ input }: { input: any }) {
   const styles = useStyles();
   const isDark = useIsDark();
@@ -232,6 +292,8 @@ function DailyTab({ input }: { input: any }) {
           </View>
         ))}
       </View>
+
+      <BiorhythmSection input={input} />
     </View>
   );
 }
@@ -472,6 +534,18 @@ const createStyles = (colors: ThemeColors) =>
     width: 22, height: 22, borderRadius: 11, marginTop: 6,
     borderWidth: 1, borderColor: colors.border,
   },
+  // 바이오리듬
+  bioCard: {
+    backgroundColor: colors.card, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: colors.border,
+    padding: 16, marginTop: 20,
+  },
+  bioSub: { fontSize: 12, color: colors.textSoft, marginBottom: 8 },
+  bioLegend: { flexDirection: "row", marginTop: 8 },
+  bioRow: { flex: 1, flexDirection: "row", alignItems: "center", gap: 5 },
+  bioDot: { width: 10, height: 10, borderRadius: 5 },
+  bioLabel: { fontSize: 12, color: colors.textSoft, fontWeight: "600" },
+  bioMood: { fontSize: 12, fontWeight: "800" },
   // 토정비결
   guaHero: {
     borderRadius: radius.xl, padding: 24, alignItems: "center", marginBottom: 16,

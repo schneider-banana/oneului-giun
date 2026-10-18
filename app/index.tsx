@@ -174,6 +174,29 @@ export default function Home() {
         <MaterialIcons name="chevron-right" size={24} color={c.inactive} />
       </Pressable>
 
+      <View style={styles.funRow}>
+        <Pressable
+          style={({ pressed }) => [styles.funCard, pressed && styles.pressed]}
+          onPress={() => router.push("/tarot")}
+        >
+          <View style={[styles.reminderIcon, { backgroundColor: c.primarySoft }]}>
+            <MaterialIcons name="style" size={22} color={c.primaryDeep} />
+          </View>
+          <Text style={styles.funTitle}>오늘의 타로</Text>
+          <Text style={styles.funSub}>매일 한 장씩</Text>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.funCard, pressed && styles.pressed]}
+          onPress={() => router.push("/dream")}
+        >
+          <View style={[styles.reminderIcon, { backgroundColor: c.primarySoft }]}>
+            <MaterialIcons name="bedtime" size={22} color={c.primaryDeep} />
+          </View>
+          <Text style={styles.funTitle}>꿈해몽</Text>
+          <Text style={styles.funSub}>어젯밤 꿈 풀이</Text>
+        </Pressable>
+      </View>
+
       <View style={styles.reminderRow}>
         <View style={[styles.reminderIcon, { backgroundColor: c.primarySoft }]}>
           <MaterialIcons name="notifications-none" size={22} color={c.primaryDeep} />
@@ -273,4 +296,13 @@ const createStyles = (colors: ThemeColors) =>
     reminderText: { flex: 1 },
     reminderTitle: { fontSize: 15, fontWeight: "800", color: colors.text, marginBottom: 4 },
     reminderSub: { fontSize: 13, color: colors.textSoft },
+    funRow: { flexDirection: "row", gap: 10, marginTop: 16 },
+    funCard: {
+      flex: 1, alignItems: "center",
+      backgroundColor: colors.card, borderRadius: radius.lg,
+      borderWidth: 1, borderColor: colors.border,
+      padding: 16,
+    },
+    funTitle: { fontSize: 15, fontWeight: "800", color: colors.text, marginTop: 8 },
+    funSub: { fontSize: 12, color: colors.textSoft, marginTop: 4 },
   });
