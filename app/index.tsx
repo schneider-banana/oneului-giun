@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, FlatList, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, FlatList, Linking, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -12,6 +12,9 @@ import {
   cancelReminders, isReminderEnabled, refreshReminders,
   requestReminderPermission, scheduleReminders,
 } from "../src/lib/reminder";
+
+// TODO: 실제 이메일로 교체
+const SUPPORT_EMAIL = "YOUR_EMAIL_HERE";
 
 export default function Home() {
   const router = useRouter();
@@ -95,6 +98,13 @@ export default function Home() {
       await cancelReminders();
       setReminderOn(false);
     }
+  };
+
+  const sendFeedback = () => {
+    const subject = encodeURIComponent("오늘의기운 의견");
+    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${subject}`).catch(() => {
+      Alert.alert("이메일 앱 없음", "메일 앱을 설치한 뒤 다시 시도해줘.");
+    });
   };
 
   return (
@@ -212,6 +222,20 @@ export default function Home() {
           thumbColor="#FFFFFF"
         />
       </View>
+
+      <Pressable
+        style={({ pressed }) => [styles.matchRow, pressed && styles.pressed]}
+        onPress={sendFeedback}
+      >
+        <View style={[styles.reminderIcon, { backgroundColor: c.primarySoft }]}>
+          <MaterialIcons name="mail-outline" size={22} color={c.primaryDeep} />
+        </View>
+        <View style={styles.reminderText}>
+          <Text style={styles.reminderTitle}>의견 보내기</Text>
+          <Text style={styles.reminderSub}>불편한 점이나 바라는 점을 알려줘</Text>
+        </View>
+        <MaterialIcons name="chevron-right" size={24} color={c.inactive} />
+      </Pressable>
     </View>
   );
 }
